@@ -1,55 +1,390 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Algo Studio | DSA Visualizer</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
-</head>
-<body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="brand"><span class="brand-mark">∿</span><span>algo<span class="brand-accent">.</span>studio</span></div>
-    <div class="eyebrow">Explore</div>
-    <nav class="nav-list">
-      <button class="nav-item active" data-view="workspace"><span class="nav-icon">◈</span>Visualizer</button>
-      <button class="nav-item" data-view="library"><span class="nav-icon">▤</span>Algorithm library</button>
-      <button class="nav-item" data-view="notes"><span class="nav-icon">✦</span>My notes</button>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="eyebrow">Your progress</div>
-      <div class="progress-card"><div class="progress-top"><span>Sorting fundamentals</span><strong>68%</strong></div><div class="progress-bar"><i></i></div><small>12 of 18 concepts explored</small></div>
-      <button class="help-link"><span>?</span> Keyboard shortcuts <kbd>⌘ /</kbd></button>
-    </div>
-  </aside>
-  <main class="main-content">
-    <header class="topbar"><div class="breadcrumb"><span>Workspace</span><b>/</b><strong id="breadcrumbTitle">Visualizer</strong></div><div class="top-actions"><span class="status-dot"></span> Autosaved <button class="icon-button" title="Settings">⚙</button><div class="avatar">AM</div></div></header>
-    <section class="page-heading"><div><p class="overline" id="pageOverline">INTERACTIVE LAB <span>•</span> SORTING</p><h1 id="pageTitle">Make algorithms <em>visible.</em></h1><p class="subtitle" id="pageSubtitle">Build intuition by watching every comparison, swap, and decision unfold.</p></div><div class="heading-actions"><button class="ghost-button" id="randomizeButton">↻ <span>Randomize</span></button><button class="primary-button" id="shareButton">↗ <span>Share run</span></button></div></section>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Algo Studio | DSA Visualizer</title>
 
-    <div id="workspaceView">
-      <div class="workspace-grid">
-        <section class="visual-card">
-          <div class="visual-toolbar"><div class="segmented" id="categoryTabs"><button class="selected" data-category="sorting">Sorting</button><button data-category="searching">Searching</button><button data-category="graphs">Graphs</button></div><div class="toolbar-right"><label class="select-wrap"><span>Algorithm</span><select id="algorithmSelect"><option value="bubble-sort" data-category="sorting">Bubble Sort</option><option value="selection-sort" data-category="sorting">Selection Sort</option><option value="insertion-sort" data-category="sorting">Insertion Sort</option><option value="quick-sort" data-category="sorting">Quick Sort</option><option value="merge-sort" data-category="sorting">Merge Sort</option><option value="linear-search" data-category="searching">Linear Search</option><option value="binary-search" data-category="searching">Binary Search</option><option value="bfs" data-category="graphs">Breadth-first Search</option><option value="dfs" data-category="graphs">Depth-first Search</option></select></label><button class="icon-button" title="Fullscreen">⛶</button></div></div>
-          <div class="canvas-head"><div><span class="live-pill"><i></i> Live simulation</span><h2 id="algorithmTitle">Bubble Sort</h2></div><div class="complexity"><span>TIME</span><strong id="timeComplexity">O(n²)</strong><span>SPACE</span><strong id="spaceComplexity">O(1)</strong></div></div>
-          <div class="chart-area"><div class="y-labels"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div><div class="chart" id="chart"><div class="grid-lines"><i></i><i></i><i></i><i></i><i></i></div><div class="bars" id="bars"></div></div></div>
-          <div class="chart-legend"><span><i class="legend-swatch violet"></i>Unsorted</span><span><i class="legend-swatch yellow"></i>Comparing</span><span><i class="legend-swatch coral"></i>Swapping</span><span><i class="legend-swatch mint"></i>Sorted</span><span class="step-readout"><b id="stepNumber">0</b> / <span id="stepTotal">0</span> steps</span></div>
-          <div class="player"><button class="player-button" id="resetButton" title="Reset">↺</button><button class="play-button" id="playButton" title="Play"><span id="playIcon">▶</span></button><button class="player-button" id="stepButton" title="Step forward">▸</button><div class="scrubber"><div class="scrubber-fill" id="scrubberFill"></div><input type="range" id="scrubber" min="0" max="1" value="0"></div><div class="speed-control"><span>Speed</span><select id="speedSelect"><option value="900">0.5×</option><option value="500" selected>1×</option><option value="220">2×</option><option value="80">4×</option></select></div></div>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap"
+    >
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">∿</span>
+          <span>algo<span class="brand-accent">.</span>studio</span>
+        </div>
+
+        <div class="eyebrow">Explore</div>
+
+        <nav class="nav-list" aria-label="Main navigation">
+          <button class="nav-item active" data-view="workspace">
+            <span class="nav-icon">◈</span>
+            Visualizer
+          </button>
+          <button class="nav-item" data-view="library">
+            <span class="nav-icon">▤</span>
+            Algorithm library
+          </button>
+          <button class="nav-item" data-view="notes">
+            <span class="nav-icon">✦</span>
+            My notes
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="eyebrow">Your progress</div>
+
+          <div class="progress-card">
+            <div class="progress-top">
+              <span>Sorting fundamentals</span>
+              <strong>68%</strong>
+            </div>
+            <div class="progress-bar">
+              <i></i>
+            </div>
+            <small>12 of 18 concepts explored</small>
+          </div>
+
+          <button class="help-link">
+            <span>?</span>
+            Keyboard shortcuts
+            <kbd>⌘ /</kbd>
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <span>Workspace</span>
+            <b>/</b>
+            <strong id="breadcrumbTitle">Visualizer</strong>
+          </div>
+
+          <div class="top-actions">
+            <span class="status-dot"></span>
+            Autosaved
+            <button class="icon-button" title="Settings">⚙</button>
+            <div class="avatar">AM</div>
+          </div>
+        </header>
+
+        <section class="page-heading">
+          <div>
+            <p class="overline" id="pageOverline">
+              INTERACTIVE LAB <span>•</span> SORTING
+            </p>
+            <h1 id="pageTitle">Make algorithms <em>visible.</em></h1>
+            <p class="subtitle" id="pageSubtitle">
+              Build intuition by watching every comparison, swap, and decision unfold.
+            </p>
+          </div>
+
+          <div class="heading-actions">
+            <button class="ghost-button" id="randomizeButton">
+              ↻ <span>Randomize</span>
+            </button>
+            <button class="primary-button" id="shareButton">
+              ↗ <span>Share run</span>
+            </button>
+          </div>
         </section>
-        <aside class="inspector"><div class="inspector-tabs"><button class="active" data-panel="insights">Insights</button><button data-panel="code">Pseudocode</button></div><div class="inspector-panel" id="insightsPanel"><div class="panel-label">CURRENT OPERATION</div><div class="operation"><span class="operation-icon">⇄</span><div><strong id="operationTitle">Ready to begin</strong><p id="operationDetail">Press play or step through the algorithm.</p></div></div><div class="metric-list"><div><span>Comparisons</span><strong id="comparisons">0</strong></div><div><span>Swaps</span><strong id="swaps">0</strong></div><div><span>Array access</span><strong id="accesses">0</strong></div></div><div class="panel-label">RUN SUMMARY</div><div class="summary-row"><span>Progress</span><strong id="progressLabel">0%</strong></div><div class="progress-bar large"><i id="runProgress"></i></div><div class="tip"><span>✦</span><p><b>Learning cue</b><br><span id="learningCue">Bubble sort repeatedly moves the largest unsorted value to the end.</span></p></div></div><div class="inspector-panel hidden" id="codePanel"><div class="code-block" id="codeBlock"></div></div></aside>
-      </div>
-      <section class="bottom-grid"><div class="event-panel"><div class="section-heading"><div><span class="panel-label">EVENT STREAM</span><h3>What’s happening</h3></div><span class="event-count" id="eventCount">0 events</span></div><div class="event-list" id="eventList"><div class="empty-events"><span>◌</span><p>Start the simulation to see<br>each operation appear here.</p></div></div></div><div class="data-panel"><div class="section-heading"><div><span class="panel-label">INPUT DATA</span><h3>Array configuration</h3></div><button class="tiny-button" id="editDataButton">Edit</button></div><div class="array-input" id="arrayInput"></div><div class="data-editor hidden" id="dataEditor"><label>Number of inputs<input id="sizeInput" type="number" min="4" max="48" value="24"></label><label>Manual values<textarea id="manualInput" placeholder="e.g. 42, 17, 88, 31"></textarea></label><div><button class="tiny-button" id="applyDataButton">Apply values</button><button class="tiny-button" id="closeDataButton">Cancel</button></div></div><div class="data-footer"><span><i class="dot violet-dot"></i><b id="arraySize">24</b> elements</span><span><i class="dot mint-dot"></i><span id="dataStatus">Randomized</span></span></div></div></section>
+
+        <div id="workspaceView">
+          <div class="workspace-grid">
+            <section class="visual-card">
+              <div class="visual-toolbar">
+                <div class="segmented" id="categoryTabs">
+                  <button class="selected" data-category="sorting">Sorting</button>
+                  <button data-category="searching">Searching</button>
+                  <button data-category="graphs">Graphs</button>
+                </div>
+
+                <div class="toolbar-right">
+                  <label class="select-wrap">
+                    <span>Algorithm</span>
+                    <select id="algorithmSelect">
+                      <option value="bubble-sort" data-category="sorting">
+                        Bubble Sort
+                      </option>
+                      <option value="selection-sort" data-category="sorting">
+                        Selection Sort
+                      </option>
+                      <option value="insertion-sort" data-category="sorting">
+                        Insertion Sort
+                      </option>
+                      <option value="quick-sort" data-category="sorting">
+                        Quick Sort
+                      </option>
+                      <option value="merge-sort" data-category="sorting">
+                        Merge Sort
+                      </option>
+                      <option value="linear-search" data-category="searching">
+                        Linear Search
+                      </option>
+                      <option value="binary-search" data-category="searching">
+                        Binary Search
+                      </option>
+                      <option value="bfs" data-category="graphs">
+                        Breadth-first Search
+                      </option>
+                      <option value="dfs" data-category="graphs">
+                        Depth-first Search
+                      </option>
+                    </select>
+                  </label>
+
+                  <button class="icon-button" title="Fullscreen">⛶</button>
+                </div>
+              </div>
+
+              <div class="canvas-head">
+                <div>
+                  <span class="live-pill"><i></i> Live simulation</span>
+                  <h2 id="algorithmTitle">Bubble Sort</h2>
+                </div>
+
+                <div class="complexity">
+                  <span>TIME</span>
+                  <strong id="timeComplexity">O(n²)</strong>
+                  <span>SPACE</span>
+                  <strong id="spaceComplexity">O(1)</strong>
+                </div>
+              </div>
+
+              <div class="chart-area">
+                <div class="y-labels">
+                  <span>100</span>
+                  <span>75</span>
+                  <span>50</span>
+                  <span>25</span>
+                  <span>0</span>
+                </div>
+
+                <div class="chart" id="chart">
+                  <div class="grid-lines">
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                  </div>
+                  <div class="bars" id="bars"></div>
+                </div>
+              </div>
+
+              <div class="chart-legend">
+                <span><i class="legend-swatch violet"></i>Unsorted</span>
+                <span><i class="legend-swatch yellow"></i>Comparing</span>
+                <span><i class="legend-swatch coral"></i>Swapping</span>
+                <span><i class="legend-swatch mint"></i>Sorted</span>
+                <span class="step-readout">
+                  <b id="stepNumber">0</b> /
+                  <span id="stepTotal">0</span> steps
+                </span>
+              </div>
+
+              <div class="player">
+                <button class="player-button" id="resetButton" title="Reset">↺</button>
+                <button class="play-button" id="playButton" title="Play">
+                  <span id="playIcon">▶</span>
+                </button>
+                <button class="player-button" id="stepButton" title="Step forward">▸</button>
+
+                <div class="scrubber">
+                  <div class="scrubber-fill" id="scrubberFill"></div>
+                  <input type="range" id="scrubber" min="0" max="1" value="0">
+                </div>
+
+                <div class="speed-control">
+                  <span>Speed</span>
+                  <select id="speedSelect">
+                    <option value="900">0.5×</option>
+                    <option value="500" selected>1×</option>
+                    <option value="220">2×</option>
+                    <option value="80">4×</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <aside class="inspector">
+              <div class="inspector-tabs">
+                <button class="active" data-panel="insights">Insights</button>
+                <button data-panel="code">Pseudocode</button>
+              </div>
+
+              <div class="inspector-panel" id="insightsPanel">
+                <div class="panel-label">CURRENT OPERATION</div>
+
+                <div class="operation">
+                  <span class="operation-icon">⇄</span>
+                  <div>
+                    <strong id="operationTitle">Ready to begin</strong>
+                    <p id="operationDetail">
+                      Press play or step through the algorithm.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="metric-list">
+                  <div>
+                    <span>Comparisons</span>
+                    <strong id="comparisons">0</strong>
+                  </div>
+                  <div>
+                    <span>Swaps</span>
+                    <strong id="swaps">0</strong>
+                  </div>
+                  <div>
+                    <span>Array access</span>
+                    <strong id="accesses">0</strong>
+                  </div>
+                </div>
+
+                <div class="panel-label">RUN SUMMARY</div>
+                <div class="summary-row">
+                  <span>Progress</span>
+                  <strong id="progressLabel">0%</strong>
+                </div>
+                <div class="progress-bar large">
+                  <i id="runProgress"></i>
+                </div>
+
+                <div class="tip">
+                  <span>✦</span>
+                  <p>
+                    <b>Learning cue</b><br>
+                    <span id="learningCue">
+                      Bubble sort repeatedly moves the largest unsorted value to the end.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="inspector-panel hidden" id="codePanel">
+                <div class="code-block" id="codeBlock"></div>
+              </div>
+            </aside>
+          </div>
+
+          <section class="bottom-grid">
+            <div class="event-panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">EVENT STREAM</span>
+                  <h3>What’s happening</h3>
+                </div>
+                <span class="event-count" id="eventCount">0 events</span>
+              </div>
+
+              <div class="event-list" id="eventList">
+                <div class="empty-events">
+                  <span>◌</span>
+                  <p>
+                    Start the simulation to see<br>
+                    each operation appear here.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="data-panel">
+              <div class="section-heading">
+                <div>
+                  <span class="panel-label">INPUT DATA</span>
+                  <h3>Array configuration</h3>
+                </div>
+                <button class="tiny-button" id="editDataButton">Edit</button>
+              </div>
+
+              <div class="array-input" id="arrayInput"></div>
+
+              <div class="data-editor hidden" id="dataEditor">
+                <label>
+                  Number of inputs
+                  <input
+                    id="sizeInput"
+                    type="number"
+                    min="4"
+                    max="48"
+                    value="24"
+                  >
+                </label>
+
+                <label>
+                  Manual values
+                  <textarea
+                    id="manualInput"
+                    placeholder="e.g. 42, 17, 88, 31"
+                  ></textarea>
+                </label>
+
+                <div>
+                  <button class="tiny-button" id="applyDataButton">Apply values</button>
+                  <button class="tiny-button" id="closeDataButton">Cancel</button>
+                </div>
+              </div>
+
+              <div class="data-footer">
+                <span>
+                  <i class="dot violet-dot"></i>
+                  <b id="arraySize">24</b> elements
+                </span>
+                <span>
+                  <i class="dot mint-dot"></i>
+                  <span id="dataStatus">Randomized</span>
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="content-view hidden" id="libraryView">
+          <div class="section-heading">
+            <div>
+              <span class="panel-label">ALGORITHM LIBRARY</span>
+              <h3>Choose your next concept</h3>
+            </div>
+            <span class="event-count">9 visual algorithms</span>
+          </div>
+          <div class="library-grid" id="libraryGrid"></div>
+        </section>
+
+        <section class="content-view hidden" id="notesView">
+          <div class="section-heading">
+            <div>
+              <span class="panel-label">MY NOTES</span>
+              <h3>Keep the insight</h3>
+            </div>
+            <button class="tiny-button" id="saveNoteButton">Save note</button>
+          </div>
+
+          <textarea
+            class="notes-editor"
+            id="notesEditor"
+            placeholder="Write what you noticed about this run..."
+          ></textarea>
+          <div class="saved-note" id="savedNote">No note saved yet.</div>
+        </section>
+
+        <footer>
+          <span>algo.studio <b>•</b> built for deeper understanding</span>
+          <span>v1.0.0 <b>•</b> local workspace</span>
+        </footer>
+      </main>
     </div>
 
-    <section class="content-view hidden" id="libraryView"><div class="section-heading"><div><span class="panel-label">ALGORITHM LIBRARY</span><h3>Choose your next concept</h3></div><span class="event-count">9 visual algorithms</span></div><div class="library-grid" id="libraryGrid"></div></section>
-    <section class="content-view hidden" id="notesView"><div class="section-heading"><div><span class="panel-label">MY NOTES</span><h3>Keep the insight</h3></div><button class="tiny-button" id="saveNoteButton">Save note</button></div><textarea class="notes-editor" id="notesEditor" placeholder="Write what you noticed about this run..."></textarea><div class="saved-note" id="savedNote">No note saved yet.</div></section>
-    <footer><span>algo.studio <b>•</b> built for deeper understanding</span><span>v1.0.0 <b>•</b> local workspace</span></footer>
-  </main>
-</div>
-<div class="toast" id="toast">Share link copied</div>
-<script src="{% static 'js/app.js' %}"></script>
-</body>
+    <div class="toast" id="toast">Share link copied</div>
+    <script src="{% static 'js/app.js' %}"></script>
+  </body>
 </html>
