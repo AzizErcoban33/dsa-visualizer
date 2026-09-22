@@ -15,6 +15,14 @@ The project currently includes visualizations for:
 - Binary search
 - Breadth-first search (BFS)
 - Depth-first search (DFS)
+- Dijkstra's shortest-path algorithm
+- Topological sort with depth-first search
+- Kahn's topological-sort algorithm
+
+Graph algorithms use a dedicated directed, weighted node-and-edge canvas. The
+visualizer highlights the active node and edge, the current frontier, processed
+nodes, edge weights, traversal or topological output order, and Dijkstra's
+tentative distances.
 
 ## Requirements
 

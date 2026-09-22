@@ -16,11 +16,65 @@ ALGORITHM_CATALOG = {
         "space": "O(1)",
         "category": "Sorting",
     },
+    "insertion-sort": {
+        "name": "Insertion Sort",
+        "complexity": "O(n^2)",
+        "space": "O(1)",
+        "category": "Sorting",
+    },
+    "quick-sort": {
+        "name": "Quick Sort",
+        "complexity": "O(n log n)",
+        "space": "O(log n)",
+        "category": "Sorting",
+    },
+    "merge-sort": {
+        "name": "Merge Sort",
+        "complexity": "O(n log n)",
+        "space": "O(n)",
+        "category": "Sorting",
+    },
+    "linear-search": {
+        "name": "Linear Search",
+        "complexity": "O(n)",
+        "space": "O(1)",
+        "category": "Searching",
+    },
     "binary-search": {
         "name": "Binary Search",
         "complexity": "O(log n)",
         "space": "O(1)",
         "category": "Searching",
+    },
+    "bfs": {
+        "name": "Breadth-first Search",
+        "complexity": "O(V + E)",
+        "space": "O(V)",
+        "category": "Graphs",
+    },
+    "dfs": {
+        "name": "Depth-first Search",
+        "complexity": "O(V + E)",
+        "space": "O(V)",
+        "category": "Graphs",
+    },
+    "dijkstra": {
+        "name": "Dijkstra's Shortest Path",
+        "complexity": "O((V + E) log V)",
+        "space": "O(V)",
+        "category": "Graphs",
+    },
+    "topological-sort": {
+        "name": "Topological Sort (DFS)",
+        "complexity": "O(V + E)",
+        "space": "O(V)",
+        "category": "Graphs",
+    },
+    "kahn": {
+        "name": "Kahn's Algorithm",
+        "complexity": "O(V + E)",
+        "space": "O(V)",
+        "category": "Graphs",
     },
 }
 

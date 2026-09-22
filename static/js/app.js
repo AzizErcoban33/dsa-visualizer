@@ -68,6 +68,12 @@ const algorithms = {
     time: "O(V + E)",
     space: "O(V)",
     cue: "Explore the graph layer by layer using a queue.",
+    pseudocode: [
+      "enqueue the start node",
+      "dequeue the next node",
+      "visit each undiscovered neighbor",
+      "repeat until the queue is empty",
+    ],
   },
   dfs: {
     name: "Depth-first Search",
@@ -75,8 +81,79 @@ const algorithms = {
     time: "O(V + E)",
     space: "O(V)",
     cue: "Follow one path deeply before backtracking.",
+    pseudocode: [
+      "visit the current node",
+      "inspect each outgoing edge",
+      "recurse into an unvisited neighbor",
+      "backtrack when no neighbor remains",
+    ],
+  },
+  dijkstra: {
+    name: "Dijkstra's Shortest Path",
+    category: "graphs",
+    time: "O((V + E) log V)",
+    space: "O(V)",
+    cue: "Always settle the closest unfinished node, then relax its edges.",
+    pseudocode: [
+      "set start distance to zero",
+      "take the closest unsettled node",
+      "relax every outgoing edge",
+      "repeat until no reachable node remains",
+    ],
+  },
+  "topological-sort": {
+    name: "Topological Sort (DFS)",
+    category: "graphs",
+    time: "O(V + E)",
+    space: "O(V)",
+    cue: "Add each node to the front only after all descendants finish.",
+    pseudocode: [
+      "start DFS from every unvisited node",
+      "explore each outgoing edge",
+      "finish all descendants first",
+      "prepend the finished node to the order",
+    ],
+  },
+  kahn: {
+    name: "Kahn's Algorithm",
+    category: "graphs",
+    time: "O(V + E)",
+    space: "O(V)",
+    cue: "Repeatedly remove nodes whose in-degree has reached zero.",
+    pseudocode: [
+      "compute every node's in-degree",
+      "enqueue all zero in-degree nodes",
+      "remove one node and emit it",
+      "decrease neighbors and enqueue new zeros",
+    ],
   },
 };
+
+const GRAPH_NODES = [
+  { id: "A", x: 65, y: 150 },
+  { id: "B", x: 220, y: 62 },
+  { id: "C", x: 220, y: 238 },
+  { id: "D", x: 395, y: 48 },
+  { id: "E", x: 405, y: 174 },
+  { id: "F", x: 575, y: 70 },
+  { id: "G", x: 570, y: 235 },
+  { id: "H", x: 710, y: 150 },
+];
+
+const DEFAULT_GRAPH_EDGES = [
+  { from: "A", to: "B", weight: 4 },
+  { from: "A", to: "C", weight: 2 },
+  { from: "B", to: "D", weight: 5 },
+  { from: "B", to: "E", weight: 7 },
+  { from: "C", to: "B", weight: 1 },
+  { from: "C", to: "E", weight: 3 },
+  { from: "D", to: "F", weight: 2 },
+  { from: "E", to: "D", weight: 4 },
+  { from: "E", to: "F", weight: 4 },
+  { from: "E", to: "G", weight: 7 },
+  { from: "F", to: "H", weight: 3 },
+  { from: "G", to: "H", weight: 1 },
+];
 
 const appState = {
   values: [],
@@ -92,6 +169,15 @@ const appState = {
   playbackTimer: null,
   algorithmId: "bubble-sort",
   category: "sorting",
+  graphEdges: DEFAULT_GRAPH_EDGES.map((edge) => ({ ...edge })),
+  graphVisited: [],
+  graphFrontier: [],
+  graphOrder: [],
+  graphActiveNode: null,
+  graphActiveEdge: null,
+  graphRelaxedEdges: [],
+  graphNodeValues: {},
+  graphEdgesChecked: 0,
 };
 
 // -----------------------------------------------------------------------------
@@ -306,17 +392,368 @@ function createBinarySearchTrace(values) {
   return trace;
 }
 
-function createGraphTrace(algorithmId) {
-  const breadthFirstOrder = [0, 1, 2, 3, 4, 5, 6, 7];
-  const depthFirstOrder = [0, 1, 3, 5, 7, 6, 4, 2];
-  const isBreadthFirst = algorithmId === "bfs";
-  const traversalOrder = isBreadthFirst ? breadthFirstOrder : depthFirstOrder;
+function getOutgoingEdges(nodeId, edges = appState.graphEdges) {
+  return edges.filter((edge) => edge.from === nodeId);
+}
 
-  return traversalOrder.map((nodeIndex, stepIndex) => ({
-    type: stepIndex === 0 ? "compare" : "visit",
-    indices: [nodeIndex],
-    message: `${isBreadthFirst ? "Visited graph layer" : "Explored path"} at node ${nodeIndex + 1}`,
-  }));
+function createGraphModel() {
+  return {
+    visited: new Set(),
+    frontier: [],
+    order: [],
+    relaxedEdges: new Set(),
+    nodeValues: {},
+    edgesChecked: 0,
+  };
+}
+
+function addGraphStep(trace, model, step) {
+  trace.push({
+    graph: true,
+    type: step.type,
+    message: step.message,
+    activeNode: step.activeNode ?? null,
+    activeEdge: step.activeEdge ?? null,
+    visited: [...model.visited],
+    frontier: [...model.frontier],
+    order: [...model.order],
+    relaxedEdges: [...model.relaxedEdges],
+    nodeValues: { ...model.nodeValues },
+    edgesChecked: model.edgesChecked,
+  });
+}
+
+function createBreadthFirstTrace() {
+  const trace = [];
+  const model = createGraphModel();
+  const discovered = new Set(["A"]);
+
+  model.frontier.push("A");
+  addGraphStep(trace, model, {
+    type: "queue",
+    activeNode: "A",
+    message: "Enqueued start node A",
+  });
+
+  while (model.frontier.length > 0) {
+    const nodeId = model.frontier.shift();
+    model.visited.add(nodeId);
+    model.order.push(nodeId);
+
+    addGraphStep(trace, model, {
+      type: "visit",
+      activeNode: nodeId,
+      message: `Visited ${nodeId}; next frontier: ${model.frontier.join(", ") || "empty"}`,
+    });
+
+    getOutgoingEdges(nodeId).forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      model.edgesChecked += 1;
+
+      addGraphStep(trace, model, {
+        type: "inspect-edge",
+        activeNode: nodeId,
+        activeEdge: edgeId,
+        message: `Checked edge ${edge.from} → ${edge.to}`,
+      });
+
+      if (discovered.has(edge.to)) {
+        return;
+      }
+
+      discovered.add(edge.to);
+      model.frontier.push(edge.to);
+      model.relaxedEdges.add(edgeId);
+
+      addGraphStep(trace, model, {
+        type: "queue",
+        activeNode: edge.to,
+        activeEdge: edgeId,
+        message: `Discovered ${edge.to} and added it to the queue`,
+      });
+    });
+  }
+
+  addGraphStep(trace, model, {
+    type: "done",
+    message: `BFS complete: ${model.order.join(" → ")}`,
+  });
+
+  return trace;
+}
+
+function createDepthFirstTrace() {
+  const trace = [];
+  const model = createGraphModel();
+
+  function visit(nodeId) {
+    model.visited.add(nodeId);
+    model.order.push(nodeId);
+    model.frontier.push(nodeId);
+
+    addGraphStep(trace, model, {
+      type: "visit",
+      activeNode: nodeId,
+      message: `Entered ${nodeId}; recursion depth ${model.frontier.length}`,
+    });
+
+    getOutgoingEdges(nodeId).forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      model.edgesChecked += 1;
+
+      addGraphStep(trace, model, {
+        type: "inspect-edge",
+        activeNode: nodeId,
+        activeEdge: edgeId,
+        message: `Exploring ${edge.from} → ${edge.to}`,
+      });
+
+      if (!model.visited.has(edge.to)) {
+        model.relaxedEdges.add(edgeId);
+        visit(edge.to);
+      }
+    });
+
+    model.frontier.pop();
+    addGraphStep(trace, model, {
+      type: "finish",
+      activeNode: nodeId,
+      message: `Finished ${nodeId} and backtracked`,
+    });
+  }
+
+  visit("A");
+  addGraphStep(trace, model, {
+    type: "done",
+    message: `DFS complete: ${model.order.join(" → ")}`,
+  });
+
+  return trace;
+}
+
+function createDijkstraTrace() {
+  const trace = [];
+  const model = createGraphModel();
+  const unsettled = new Set(GRAPH_NODES.map((node) => node.id));
+  const distances = Object.fromEntries(
+    GRAPH_NODES.map((node) => [node.id, Number.POSITIVE_INFINITY]),
+  );
+
+  distances.A = 0;
+  model.nodeValues = { ...distances };
+  model.frontier = ["A"];
+
+  addGraphStep(trace, model, {
+    type: "queue",
+    activeNode: "A",
+    message: "Set distance(A) = 0; every other distance starts at ∞",
+  });
+
+  while (unsettled.size > 0) {
+    const reachableNodes = [...unsettled].filter((nodeId) =>
+      Number.isFinite(distances[nodeId]),
+    );
+
+    if (reachableNodes.length === 0) {
+      break;
+    }
+
+    reachableNodes.sort(
+      (first, second) => distances[first] - distances[second],
+    );
+    const nodeId = reachableNodes[0];
+    unsettled.delete(nodeId);
+    model.visited.add(nodeId);
+    model.order.push(nodeId);
+    model.frontier = reachableNodes.slice(1);
+    model.nodeValues = { ...distances };
+
+    addGraphStep(trace, model, {
+      type: "visit",
+      activeNode: nodeId,
+      message: `Settled ${nodeId} with shortest distance ${distances[nodeId]}`,
+    });
+
+    getOutgoingEdges(nodeId).forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      const candidateDistance = distances[nodeId] + edge.weight;
+      model.edgesChecked += 1;
+
+      addGraphStep(trace, model, {
+        type: "inspect-edge",
+        activeNode: nodeId,
+        activeEdge: edgeId,
+        message: `Try ${edge.from} → ${edge.to}: ${distances[nodeId]} + ${edge.weight}`,
+      });
+
+      if (candidateDistance >= distances[edge.to]) {
+        return;
+      }
+
+      distances[edge.to] = candidateDistance;
+      model.nodeValues = { ...distances };
+      model.relaxedEdges.add(edgeId);
+      model.frontier = [...unsettled]
+        .filter((candidate) => Number.isFinite(distances[candidate]))
+        .sort((first, second) => distances[first] - distances[second]);
+
+      addGraphStep(trace, model, {
+        type: "relax",
+        activeNode: edge.to,
+        activeEdge: edgeId,
+        message: `Updated distance(${edge.to}) to ${candidateDistance}`,
+      });
+    });
+  }
+
+  model.frontier = [];
+  model.nodeValues = { ...distances };
+  addGraphStep(trace, model, {
+    type: "done",
+    message: "Shortest paths from A are complete",
+  });
+
+  return trace;
+}
+
+function createTopologicalTrace() {
+  const trace = [];
+  const model = createGraphModel();
+
+  function visit(nodeId) {
+    model.visited.add(nodeId);
+    model.frontier.push(nodeId);
+
+    addGraphStep(trace, model, {
+      type: "visit",
+      activeNode: nodeId,
+      message: `Started DFS at ${nodeId}`,
+    });
+
+    getOutgoingEdges(nodeId).forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      model.edgesChecked += 1;
+
+      addGraphStep(trace, model, {
+        type: "inspect-edge",
+        activeNode: nodeId,
+        activeEdge: edgeId,
+        message: `Checked dependency ${edge.from} → ${edge.to}`,
+      });
+
+      if (!model.visited.has(edge.to)) {
+        model.relaxedEdges.add(edgeId);
+        visit(edge.to);
+      }
+    });
+
+    model.frontier.pop();
+    model.order.unshift(nodeId);
+
+    addGraphStep(trace, model, {
+      type: "finish",
+      activeNode: nodeId,
+      message: `Finished ${nodeId}; prepended it to the topological order`,
+    });
+  }
+
+  GRAPH_NODES.forEach((node) => {
+    if (!model.visited.has(node.id)) {
+      visit(node.id);
+    }
+  });
+
+  addGraphStep(trace, model, {
+    type: "done",
+    message: `Topological order: ${model.order.join(" → ")}`,
+  });
+
+  return trace;
+}
+
+function createKahnTrace() {
+  const trace = [];
+  const model = createGraphModel();
+  const inDegrees = Object.fromEntries(GRAPH_NODES.map((node) => [node.id, 0]));
+
+  appState.graphEdges.forEach((edge) => {
+    inDegrees[edge.to] += 1;
+  });
+
+  model.nodeValues = { ...inDegrees };
+  model.frontier = GRAPH_NODES.map((node) => node.id).filter(
+    (nodeId) => inDegrees[nodeId] === 0,
+  );
+
+  addGraphStep(trace, model, {
+    type: "queue",
+    activeNode: model.frontier[0],
+    message: `Zero in-degree queue: ${model.frontier.join(", ")}`,
+  });
+
+  while (model.frontier.length > 0) {
+    const nodeId = model.frontier.shift();
+    model.visited.add(nodeId);
+    model.order.push(nodeId);
+
+    addGraphStep(trace, model, {
+      type: "visit",
+      activeNode: nodeId,
+      message: `Emitted ${nodeId} from the zero in-degree queue`,
+    });
+
+    getOutgoingEdges(nodeId).forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      inDegrees[edge.to] -= 1;
+      model.nodeValues = { ...inDegrees };
+      model.edgesChecked += 1;
+      model.relaxedEdges.add(edgeId);
+
+      addGraphStep(trace, model, {
+        type: "inspect-edge",
+        activeNode: edge.to,
+        activeEdge: edgeId,
+        message: `Removed ${edge.from} → ${edge.to}; in-degree(${edge.to}) = ${inDegrees[edge.to]}`,
+      });
+
+      if (inDegrees[edge.to] === 0) {
+        model.frontier.push(edge.to);
+        addGraphStep(trace, model, {
+          type: "queue",
+          activeNode: edge.to,
+          activeEdge: edgeId,
+          message: `${edge.to} reached in-degree 0 and entered the queue`,
+        });
+      }
+    });
+  }
+
+  addGraphStep(trace, model, {
+    type: "done",
+    message:
+      model.order.length === GRAPH_NODES.length
+        ? `Kahn's order: ${model.order.join(" → ")}`
+        : "A cycle prevents a topological ordering",
+  });
+
+  return trace;
+}
+
+function createGraphTrace(algorithmId) {
+  switch (algorithmId) {
+    case "bfs":
+      return createBreadthFirstTrace();
+    case "dfs":
+      return createDepthFirstTrace();
+    case "dijkstra":
+      return createDijkstraTrace();
+    case "topological-sort":
+      return createTopologicalTrace();
+    case "kahn":
+      return createKahnTrace();
+    default:
+      return [];
+  }
 }
 
 function createAlgorithmTrace(values, algorithmId) {
@@ -337,6 +774,9 @@ function createAlgorithmTrace(values, algorithmId) {
       return createBinarySearchTrace(values);
     case "bfs":
     case "dfs":
+    case "dijkstra":
+    case "topological-sort":
+    case "kahn":
       return createGraphTrace(algorithmId);
     default:
       return [];
@@ -374,6 +814,151 @@ function renderBars(highlights = {}) {
   });
 }
 
+function isGraphAlgorithm() {
+  return algorithms[appState.algorithmId].category === "graphs";
+}
+
+function getGraphNode(nodeId) {
+  return GRAPH_NODES.find((node) => node.id === nodeId);
+}
+
+function getEdgeCoordinates(edge) {
+  const source = getGraphNode(edge.from);
+  const target = getGraphNode(edge.to);
+  const deltaX = target.x - source.x;
+  const deltaY = target.y - source.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  const unitX = deltaX / distance;
+  const unitY = deltaY / distance;
+  const nodeRadius = 23;
+  const arrowPadding = 8;
+
+  return {
+    x1: source.x + unitX * nodeRadius,
+    y1: source.y + unitY * nodeRadius,
+    x2: target.x - unitX * (nodeRadius + arrowPadding),
+    y2: target.y - unitY * (nodeRadius + arrowPadding),
+    labelX: (source.x + target.x) / 2 - unitY * 10,
+    labelY: (source.y + target.y) / 2 + unitX * 10,
+  };
+}
+
+function getGraphNodeCaption(nodeId) {
+  if (appState.algorithmId === "dijkstra") {
+    const distance = appState.graphNodeValues[nodeId];
+    return `d=${Number.isFinite(distance) ? distance : "∞"}`;
+  }
+
+  if (appState.algorithmId === "kahn") {
+    const inDegree = appState.graphNodeValues[nodeId];
+    return Number.isFinite(inDegree) ? `in=${inDegree}` : "";
+  }
+
+  const orderIndex = appState.graphOrder.indexOf(nodeId);
+  return orderIndex >= 0 ? `#${orderIndex + 1}` : "";
+}
+
+function renderGraph() {
+  const svgNamespace = "http://www.w3.org/2000/svg";
+  const edgesGroup = getElement("graphEdges");
+  const nodesGroup = getElement("graphNodes");
+
+  edgesGroup.innerHTML = "";
+  nodesGroup.innerHTML = "";
+
+  appState.graphEdges.forEach((edge) => {
+    const edgeId = `${edge.from}-${edge.to}`;
+    const coordinates = getEdgeCoordinates(edge);
+    const line = document.createElementNS(svgNamespace, "line");
+    const weight = document.createElementNS(svgNamespace, "text");
+
+    line.setAttribute("x1", coordinates.x1);
+    line.setAttribute("y1", coordinates.y1);
+    line.setAttribute("x2", coordinates.x2);
+    line.setAttribute("y2", coordinates.y2);
+    line.setAttribute("marker-end", "url(#arrowHead)");
+    line.classList.add("graph-edge");
+
+    if (appState.graphRelaxedEdges.includes(edgeId)) {
+      line.classList.add("relaxed");
+    }
+    if (appState.graphActiveEdge === edgeId) {
+      line.classList.add("active");
+    }
+
+    weight.setAttribute("x", coordinates.labelX);
+    weight.setAttribute("y", coordinates.labelY);
+    weight.setAttribute("class", "graph-edge-label");
+    weight.setAttribute("text-anchor", "middle");
+    weight.textContent = edge.weight;
+
+    edgesGroup.append(line, weight);
+  });
+
+  GRAPH_NODES.forEach((node) => {
+    const group = document.createElementNS(svgNamespace, "g");
+    const circle = document.createElementNS(svgNamespace, "circle");
+    const label = document.createElementNS(svgNamespace, "text");
+    const caption = document.createElementNS(svgNamespace, "text");
+
+    group.classList.add("graph-node");
+    group.setAttribute("data-node", node.id);
+
+    if (appState.graphFrontier.includes(node.id)) {
+      group.classList.add("frontier");
+    }
+    if (appState.graphVisited.includes(node.id)) {
+      group.classList.add("visited");
+    }
+    if (appState.graphActiveNode === node.id) {
+      group.classList.add("active");
+    }
+
+    circle.setAttribute("cx", node.x);
+    circle.setAttribute("cy", node.y);
+    circle.setAttribute("r", 23);
+
+    label.setAttribute("x", node.x);
+    label.setAttribute("y", node.y);
+    label.setAttribute("class", "node-label");
+    label.textContent = node.id;
+
+    caption.setAttribute("x", node.x);
+    caption.setAttribute("y", node.y + 37);
+    caption.setAttribute("class", "node-distance");
+    caption.textContent = getGraphNodeCaption(node.id);
+
+    group.append(circle, label, caption);
+    nodesGroup.appendChild(group);
+  });
+
+  renderGraphResults();
+}
+
+function renderGraphResults() {
+  const orderContainer = getElement("visitOrder");
+
+  if (appState.graphOrder.length === 0) {
+    orderContainer.innerHTML =
+      '<span class="order-empty">Waiting for the first node</span>';
+  } else {
+    orderContainer.innerHTML = appState.graphOrder
+      .map((nodeId) => `<span class="order-chip">${nodeId}</span>`)
+      .join("");
+  }
+
+  const distanceSummary = getElement("distanceSummary");
+  const shouldShowDistances = appState.algorithmId === "dijkstra";
+  distanceSummary.classList.toggle("hidden", !shouldShowDistances);
+
+  if (shouldShowDistances) {
+    distanceSummary.textContent = GRAPH_NODES.map((node) => {
+      const distance = appState.graphNodeValues[node.id];
+      return `${node.id}: ${Number.isFinite(distance) ? distance : "∞"}`;
+    }).join("  ·  ");
+  }
+}
+
 function renderMiniArray() {
   const arrayPreview = getElement("arrayInput");
   const largestValue = Math.max(...appState.originalValues, 100);
@@ -396,9 +981,25 @@ function renderStats() {
 
   getElement("stepNumber").textContent = appState.currentStep;
   getElement("stepTotal").textContent = appState.totalSteps;
-  getElement("comparisons").textContent = appState.comparisons;
-  getElement("swaps").textContent = appState.swaps;
-  getElement("accesses").textContent = appState.arrayAccesses;
+  getElement("graphStepNumber").textContent = appState.currentStep;
+  getElement("graphStepTotal").textContent = appState.totalSteps;
+
+  if (isGraphAlgorithm()) {
+    getElement("firstMetricLabel").textContent = "Nodes processed";
+    getElement("secondMetricLabel").textContent = "Edges checked";
+    getElement("thirdMetricLabel").textContent = "Frontier size";
+    getElement("comparisons").textContent = appState.graphVisited.length;
+    getElement("swaps").textContent = appState.graphEdgesChecked;
+    getElement("accesses").textContent = appState.graphFrontier.length;
+  } else {
+    getElement("firstMetricLabel").textContent = "Comparisons";
+    getElement("secondMetricLabel").textContent = "Swaps";
+    getElement("thirdMetricLabel").textContent = "Array access";
+    getElement("comparisons").textContent = appState.comparisons;
+    getElement("swaps").textContent = appState.swaps;
+    getElement("accesses").textContent = appState.arrayAccesses;
+  }
+
   getElement("progressLabel").textContent = `${progressPercentage}%`;
   getElement("runProgress").style.width = `${progressPercentage}%`;
   getElement("scrubber").value = appState.currentStep;
@@ -407,10 +1008,10 @@ function renderStats() {
 }
 
 function getEventStyle(type) {
-  if (type === "compare") {
+  if (type === "compare" || type === "inspect-edge") {
     return "compare";
   }
-  if (type === "swap") {
+  if (type === "swap" || type === "relax") {
     return "swap";
   }
   return "sort";
@@ -455,6 +1056,9 @@ function getHighlightsForStep(traceItem) {
 }
 
 function getOperationTitle(traceItem) {
+  if (traceItem.graph && traceItem.type === "done") {
+    return "Graph run complete";
+  }
   if (traceItem.type === "found") {
     return "Target found";
   }
@@ -464,11 +1068,25 @@ function getOperationTitle(traceItem) {
   return traceItem.message;
 }
 
-function getOperationDetail(type) {
-  if (type === "compare") {
+function getOperationDetail(traceItem) {
+  if (traceItem.graph) {
+    const graphDetails = {
+      queue:
+        "The frontier contains nodes that are discovered but not processed.",
+      visit: "This node is now part of the algorithm's output order.",
+      "inspect-edge": "The highlighted directed edge is being examined.",
+      relax: "A shorter route was found, so the tentative distance changed.",
+      finish: "All descendants are complete, so the algorithm backtracks.",
+      done: "The final node order and graph state are now visible.",
+    };
+
+    return graphDetails[traceItem.type] || "The graph state has advanced.";
+  }
+
+  if (traceItem.type === "compare") {
     return "A comparison is in progress.";
   }
-  if (type === "swap") {
+  if (traceItem.type === "swap") {
     return "Values are moving into place.";
   }
   return "Keep going, you are building intuition.";
@@ -478,6 +1096,19 @@ function getOperationDetail(type) {
 // Simulation controls
 // -----------------------------------------------------------------------------
 
+function applyGraphTraceItem(traceItem) {
+  appState.graphVisited = [...traceItem.visited];
+  appState.graphFrontier = [...traceItem.frontier];
+  appState.graphOrder = [...traceItem.order];
+  appState.graphActiveNode = traceItem.activeNode;
+  appState.graphActiveEdge = traceItem.activeEdge;
+  appState.graphRelaxedEdges = [...traceItem.relaxedEdges];
+  appState.graphNodeValues = { ...traceItem.nodeValues };
+  appState.graphEdgesChecked = traceItem.edgesChecked;
+
+  renderGraph();
+}
+
 function applyTraceStep(stepIndex) {
   const traceItem = appState.trace[stepIndex];
 
@@ -485,35 +1116,38 @@ function applyTraceStep(stepIndex) {
     return;
   }
 
-  if (traceItem.type === "reset") {
-    appState.values = [...traceItem.values];
+  if (traceItem.graph) {
+    applyGraphTraceItem(traceItem);
+  } else {
+    if (traceItem.type === "reset") {
+      appState.values = [...traceItem.values];
+    }
+
+    if (traceItem.type === "swap") {
+      const [firstIndex, secondIndex] = traceItem.indices;
+      [appState.values[firstIndex], appState.values[secondIndex]] = [
+        appState.values[secondIndex],
+        appState.values[firstIndex],
+      ];
+      appState.swaps += 1;
+    }
+
+    if (traceItem.type === "compare") {
+      appState.comparisons += 1;
+    }
+
+    appState.arrayAccesses += traceItem.indices?.length || 0;
+    renderBars(getHighlightsForStep(traceItem));
   }
 
-  if (traceItem.type === "swap") {
-    const [firstIndex, secondIndex] = traceItem.indices;
-    [appState.values[firstIndex], appState.values[secondIndex]] = [
-      appState.values[secondIndex],
-      appState.values[firstIndex],
-    ];
-    appState.swaps += 1;
-  }
-
-  if (traceItem.type === "compare") {
-    appState.comparisons += 1;
-  }
-
-  appState.arrayAccesses += traceItem.indices?.length || 0;
   appState.currentStep = stepIndex + 1;
   appState.events.push(traceItem);
 
   addEventToStream(traceItem);
-  renderBars(getHighlightsForStep(traceItem));
   renderStats();
 
   getElement("operationTitle").textContent = getOperationTitle(traceItem);
-  getElement("operationDetail").textContent = getOperationDetail(
-    traceItem.type,
-  );
+  getElement("operationDetail").textContent = getOperationDetail(traceItem);
 }
 
 function stopPlayback() {
@@ -534,6 +1168,14 @@ function resetSimulation() {
   appState.comparisons = 0;
   appState.swaps = 0;
   appState.arrayAccesses = 0;
+  appState.graphVisited = [];
+  appState.graphFrontier = [];
+  appState.graphOrder = [];
+  appState.graphActiveNode = null;
+  appState.graphActiveEdge = null;
+  appState.graphRelaxedEdges = [];
+  appState.graphNodeValues = {};
+  appState.graphEdgesChecked = 0;
 
   getElement("eventList").innerHTML = `
     <div class="empty-events">
@@ -546,7 +1188,11 @@ function resetSimulation() {
   getElement("operationDetail").textContent =
     "Press play or step through the algorithm.";
 
-  renderBars();
+  if (isGraphAlgorithm()) {
+    renderGraph();
+  } else {
+    renderBars();
+  }
   renderStats();
 }
 
@@ -601,13 +1247,57 @@ function restartPlaybackAtNewSpeed() {
 // Algorithm, category, and page navigation
 // -----------------------------------------------------------------------------
 
-function renderPseudocode(algorithmName) {
-  getElement("codeBlock").innerHTML = `
-    <div><span class="line-no">01</span><span class="keyword">${algorithmName}</span> explores the data</div>
-    <div><span class="line-no">02</span>compare the current candidates</div>
-    <div class="code-active"><span class="line-no">03</span>update the active state</div>
-    <div><span class="line-no">04</span>repeat until complete</div>
-  `;
+function renderPseudocode(algorithm) {
+  const defaultSteps = [
+    `${algorithm.name} explores the data`,
+    "compare the current candidates",
+    "update the active state",
+    "repeat until complete",
+  ];
+  const steps = algorithm.pseudocode || defaultSteps;
+
+  getElement("codeBlock").innerHTML = steps
+    .map((step, index) => {
+      const lineNumber = String(index + 1).padStart(2, "0");
+      const activeClass = index === 2 ? ' class="code-active"' : "";
+      return `<div${activeClass}><span class="line-no">${lineNumber}</span>${step}</div>`;
+    })
+    .join("");
+}
+
+function updateVisualizationMode() {
+  const graphMode = isGraphAlgorithm();
+
+  getElement("arrayVisualization").classList.toggle("hidden", graphMode);
+  getElement("arrayLegend").classList.toggle("hidden", graphMode);
+  getElement("graphVisualization").classList.toggle("hidden", !graphMode);
+  getElement("graphLegend").classList.toggle("hidden", !graphMode);
+  getElement("graphResults").classList.toggle("hidden", !graphMode);
+  getElement("arrayInput").classList.toggle("hidden", graphMode);
+  getElement("graphDataSummary").classList.toggle("hidden", !graphMode);
+  getElement("editDataButton").classList.toggle("hidden", graphMode);
+  getElement("dataEditor").classList.add("hidden");
+
+  getElement("dataPanelLabel").textContent = graphMode
+    ? "GRAPH MODEL"
+    : "INPUT DATA";
+  getElement("dataPanelTitle").textContent = graphMode
+    ? "Directed weighted graph"
+    : "Array configuration";
+  getElement("arraySize").textContent = graphMode
+    ? GRAPH_NODES.length
+    : appState.originalValues.length;
+  getElement("dataUnit").textContent = graphMode ? " nodes" : " elements";
+  getElement("dataStatus").textContent = graphMode
+    ? "DAG preset"
+    : "Randomized";
+  getElement("randomizeButton").querySelector("span").textContent = graphMode
+    ? "New weights"
+    : "Randomize";
+
+  const categoryName = graphMode ? "GRAPHS" : appState.category.toUpperCase();
+  getElement("pageOverline").innerHTML =
+    `INTERACTIVE LAB <span>•</span> ${categoryName}`;
 }
 
 function updateSelectedAlgorithm() {
@@ -623,7 +1313,8 @@ function updateSelectedAlgorithm() {
   getElement("spaceComplexity").textContent = algorithm.space;
   getElement("learningCue").textContent = algorithm.cue;
 
-  renderPseudocode(algorithm.name);
+  updateVisualizationMode();
+  renderPseudocode(algorithm);
   resetSimulation();
 }
 
@@ -674,7 +1365,7 @@ function getViewContent(view) {
 
   return {
     breadcrumb: "Visualizer",
-    overline: "INTERACTIVE LAB <span>•</span> SORTING",
+    overline: `INTERACTIVE LAB <span>•</span> ${appState.category.toUpperCase()}`,
     title: "Make algorithms <em>visible.</em>",
     subtitle:
       "Build intuition by watching every comparison, swap, and decision unfold.",
@@ -745,6 +1436,16 @@ function selectInspectorPanel(selectedButton) {
 // -----------------------------------------------------------------------------
 
 function randomizeData() {
+  if (isGraphAlgorithm()) {
+    appState.graphEdges = DEFAULT_GRAPH_EDGES.map((edge) => ({
+      ...edge,
+      weight: Math.floor(Math.random() * 9) + 1,
+    }));
+    getElement("dataStatus").textContent = "New weights";
+    resetSimulation();
+    return;
+  }
+
   const requestedSize = Number(getElement("sizeInput").value);
   appState.originalValues = createRandomArray(requestedSize);
   getElement("dataStatus").textContent = "Randomized";

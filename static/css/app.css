@@ -543,6 +543,115 @@ h2 {
 .bar.sorted {
   background: var(--mint);
 }
+
+/* Graph canvas */
+
+.graph-area {
+  height: 260px;
+  padding: 0 18px;
+}
+
+.graph-area svg {
+  display: block;
+  width: 100%;
+  height: 230px;
+  overflow: visible;
+}
+
+.graph-area marker path {
+  fill: #c9c7d8;
+}
+
+.graph-edge {
+  stroke: #d7d5e2;
+  stroke-width: 2;
+  transition:
+    stroke 0.2s,
+    stroke-width 0.2s;
+}
+
+.graph-edge.relaxed {
+  stroke: #aaa5e9;
+  stroke-width: 2.5;
+}
+
+.graph-edge.active {
+  stroke: var(--coral);
+  stroke-width: 4;
+}
+
+.graph-edge-label {
+  fill: #8f8da2;
+  font: 600 11px "DM Mono";
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.graph-node circle {
+  fill: #fff;
+  stroke: #aaa5e9;
+  stroke-width: 3;
+  filter: drop-shadow(0 4px 8px #7165e31c);
+  transition:
+    fill 0.2s,
+    stroke 0.2s,
+    transform 0.2s;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.graph-node .node-label {
+  fill: #38364f;
+  font: 800 13px "Manrope";
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.graph-node .node-distance {
+  fill: #8f8da2;
+  font: 600 10px "DM Mono";
+  text-anchor: middle;
+}
+
+.graph-node.frontier circle {
+  fill: #fff5da;
+  stroke: var(--yellow);
+  transform: scale(1.08);
+}
+
+.graph-node.visited circle {
+  fill: #edfbf7;
+  stroke: var(--mint);
+}
+
+.graph-node.visited.frontier circle {
+  fill: #fff5da;
+  stroke: var(--yellow);
+}
+
+.graph-node.active circle {
+  fill: #fff0ee;
+  stroke: var(--coral);
+  stroke-width: 4;
+  transform: scale(1.12);
+}
+
+.graph-caption {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 8px 8px 0;
+  color: #aaa9ba;
+  font: 9px "DM Mono";
+}
+
+.graph-caption b {
+  color: var(--violet-dark);
+}
+
 .chart-legend {
   display: flex;
   gap: 14px;
@@ -569,6 +678,11 @@ h2 {
 }
 .mint {
   background: var(--mint);
+}
+
+.graph-unvisited {
+  border: 1px solid #aaa5e9;
+  background: #fff;
 }
 .step-readout {
   margin-left: auto;
@@ -705,6 +819,60 @@ h2 {
   font: 12px "DM Mono";
   color: #46455d;
 }
+
+.graph-results {
+  margin: -5px 0 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.order-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 13px;
+  min-height: 30px;
+  margin-top: 10px;
+}
+
+.order-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 27px;
+  height: 27px;
+  padding: 0 7px;
+  border-radius: 7px;
+  background: #edfbf7;
+  color: #278c70;
+  font: 700 10px "DM Mono";
+}
+
+.order-chip::after {
+  content: "→";
+  position: absolute;
+  top: 6px;
+  right: -11px;
+  color: #c4c2d0;
+}
+
+.order-chip:last-child::after {
+  content: "";
+}
+
+.order-empty {
+  color: #b2b1c0;
+  font-size: 10px;
+  line-height: 27px;
+}
+
+.distance-summary {
+  margin-top: 11px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: #f8f7fd;
+  color: #77758b;
+  font: 9px/1.8 "DM Mono";
+}
 .large {
   height: 7px;
   margin-top: 9px;
@@ -837,11 +1005,47 @@ h2 {
   padding: 25px 0 12px;
   border-bottom: 1px solid var(--line);
 }
+
+.array-input.hidden {
+  display: none;
+}
 .mini-bar {
   flex: 1;
   background: #aaa5e9;
   border-radius: 2px 2px 0 0;
   min-width: 3px;
+}
+
+.graph-data-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  height: 100px;
+  padding: 20px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.graph-data-summary div {
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  border-radius: 7px;
+  background: #f8f7fd;
+  text-align: center;
+}
+
+.graph-data-summary strong {
+  color: var(--violet-dark);
+  font: 700 14px "DM Mono";
+}
+
+.graph-data-summary span {
+  color: #9998aa;
+  font-size: 9px;
+}
+
+.graph-data-summary.hidden {
+  display: none;
 }
 .data-footer {
   display: flex;

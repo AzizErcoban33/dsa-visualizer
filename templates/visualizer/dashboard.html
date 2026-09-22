@@ -140,6 +140,15 @@
                       <option value="dfs" data-category="graphs">
                         Depth-first Search
                       </option>
+                      <option value="dijkstra" data-category="graphs">
+                        Dijkstra's Shortest Path
+                      </option>
+                      <option value="topological-sort" data-category="graphs">
+                        Topological Sort (DFS)
+                      </option>
+                      <option value="kahn" data-category="graphs">
+                        Kahn's Algorithm
+                      </option>
                     </select>
                   </label>
 
@@ -161,7 +170,7 @@
                 </div>
               </div>
 
-              <div class="chart-area">
+              <div class="chart-area" id="arrayVisualization">
                 <div class="y-labels">
                   <span>100</span>
                   <span>75</span>
@@ -182,7 +191,36 @@
                 </div>
               </div>
 
-              <div class="chart-legend">
+              <div class="graph-area hidden" id="graphVisualization">
+                <svg
+                  id="graphCanvas"
+                  viewBox="0 0 760 310"
+                  role="img"
+                  aria-label="Directed weighted graph visualization"
+                >
+                  <defs>
+                    <marker
+                      id="arrowHead"
+                      markerWidth="8"
+                      markerHeight="8"
+                      refX="7"
+                      refY="4"
+                      orient="auto"
+                    >
+                      <path d="M 0 0 L 8 4 L 0 8 z"></path>
+                    </marker>
+                  </defs>
+                  <g id="graphEdges"></g>
+                  <g id="graphNodes"></g>
+                </svg>
+
+                <div class="graph-caption">
+                  <span>Directed weighted graph</span>
+                  <span>Start node: <b>A</b></span>
+                </div>
+              </div>
+
+              <div class="chart-legend" id="arrayLegend">
                 <span><i class="legend-swatch violet"></i>Unsorted</span>
                 <span><i class="legend-swatch yellow"></i>Comparing</span>
                 <span><i class="legend-swatch coral"></i>Swapping</span>
@@ -190,6 +228,17 @@
                 <span class="step-readout">
                   <b id="stepNumber">0</b> /
                   <span id="stepTotal">0</span> steps
+                </span>
+              </div>
+
+              <div class="chart-legend hidden" id="graphLegend">
+                <span><i class="legend-swatch graph-unvisited"></i>Unvisited</span>
+                <span><i class="legend-swatch yellow"></i>Frontier</span>
+                <span><i class="legend-swatch coral"></i>Active edge</span>
+                <span><i class="legend-swatch mint"></i>Processed</span>
+                <span class="step-readout">
+                  <b id="graphStepNumber">0</b> /
+                  <span id="graphStepTotal">0</span> steps
                 </span>
               </div>
 
@@ -238,17 +287,25 @@
 
                 <div class="metric-list">
                   <div>
-                    <span>Comparisons</span>
+                    <span id="firstMetricLabel">Comparisons</span>
                     <strong id="comparisons">0</strong>
                   </div>
                   <div>
-                    <span>Swaps</span>
+                    <span id="secondMetricLabel">Swaps</span>
                     <strong id="swaps">0</strong>
                   </div>
                   <div>
-                    <span>Array access</span>
+                    <span id="thirdMetricLabel">Array access</span>
                     <strong id="accesses">0</strong>
                   </div>
+                </div>
+
+                <div class="graph-results hidden" id="graphResults">
+                  <div class="panel-label">OUTPUT ORDER</div>
+                  <div class="order-list" id="visitOrder">
+                    <span class="order-empty">Waiting for the first node</span>
+                  </div>
+                  <div class="distance-summary hidden" id="distanceSummary"></div>
                 </div>
 
                 <div class="panel-label">RUN SUMMARY</div>
@@ -301,13 +358,28 @@
             <div class="data-panel">
               <div class="section-heading">
                 <div>
-                  <span class="panel-label">INPUT DATA</span>
-                  <h3>Array configuration</h3>
+                  <span class="panel-label" id="dataPanelLabel">INPUT DATA</span>
+                  <h3 id="dataPanelTitle">Array configuration</h3>
                 </div>
                 <button class="tiny-button" id="editDataButton">Edit</button>
               </div>
 
               <div class="array-input" id="arrayInput"></div>
+
+              <div class="graph-data-summary hidden" id="graphDataSummary">
+                <div>
+                  <strong>8</strong>
+                  <span>nodes</span>
+                </div>
+                <div>
+                  <strong>12</strong>
+                  <span>directed edges</span>
+                </div>
+                <div>
+                  <strong>1–9</strong>
+                  <span>edge weights</span>
+                </div>
+              </div>
 
               <div class="data-editor hidden" id="dataEditor">
                 <label>
@@ -338,7 +410,8 @@
               <div class="data-footer">
                 <span>
                   <i class="dot violet-dot"></i>
-                  <b id="arraySize">24</b> elements
+                  <b id="arraySize">24</b>
+                  <span id="dataUnit"> elements</span>
                 </span>
                 <span>
                   <i class="dot mint-dot"></i>
@@ -355,7 +428,7 @@
               <span class="panel-label">ALGORITHM LIBRARY</span>
               <h3>Choose your next concept</h3>
             </div>
-            <span class="event-count">9 visual algorithms</span>
+            <span class="event-count">12 visual algorithms</span>
           </div>
           <div class="library-grid" id="libraryGrid"></div>
         </section>
